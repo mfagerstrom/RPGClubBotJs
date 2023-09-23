@@ -1,7 +1,9 @@
 import {config} from 'dotenv';
 import { Client, PermissionsBitField, Routes } from 'discord.js';
 import fetchAll from 'discord-fetch-all';
-import { REST } from '@discordjs/rest'
+import { REST } from '@discordjs/rest';
+import { HowLongToBeatService, HowLongToBeatEntry } from 'howlongtobeat';
+
 
 config();
 const TOKEN = process.env.BOT_TOKEN;
@@ -14,63 +16,72 @@ const client = new Client({
 });
 
 const rest = new REST({version:'10'}).setToken(TOKEN);
+const hltbService = new HowLongToBeatService();
 
 client.on('ready', () => {console.log(`${client.user.tag} has logged in.`)});
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand()) {
         // for all interactions
         const bot_channel =  client.channels.cache.get(BOT_CHANNEL_ID);
-        const is_admin = interaction.member.permissionsIn(interaction.channel).has(PermissionsBitField.Flags.Administrator);
 
-        // export channel start
-        const source_channel_id = interaction.options.getString('source_channel')
-            .replace('#', '')
-            .replace('<', '')
-            .replace('>', '');
-        const source_channel =  client.channels.cache.get(source_channel_id);
-        const destination_channel_id = interaction.options.getString('destination_channel')
-            .replace('#', '')
-            .replace('<', '')
-            .replace('>', '');
-        const destination_channel = client.channels.cache.get(destination_channel_id);
-        const starting_message_number = interaction.options.getInteger('starting_message_number');
-        const spoiler_mode = interaction.options.getBoolean('spoiler_channel_export');
+        if (interaction.commandName === 'hltb') {
+            const hltb_query = interaction.options.getString('query');
+            const destination_channel = interaction.channel;
 
-        let params = {
-            'source_channel': source_channel,
-            'destination_channel': destination_channel,
-            'bot_channel': bot_channel,
-            'command_user': interaction.member.user,
-            'starting_message_number': starting_message_number,
-            'spoiler_mode': spoiler_mode,
-        };
-
-        let bot_message = `[application command] ${params.command_user.displayName} `
-                                    + `ran /export_channel source_channel_id:${params.source_channel.id} `
-                                    + `destination_channel_id:${params.destination_channel.id}`;
-        if (params.starting_message_number != null) {
-            bot_message += ` starting_message_number:${params.starting_message_number}`;
+            hltbService.search(hltb_query).then(result => outputHltbResultsAsEmbed(interaction, result, destination_channel));
         }
-        if (params.spoiler_mode) {
-            bot_message += ` spoiler_channel_export:${params.spoiler_mode}`;
-        }
-        console.log(bot_message);
-        params.bot_channel.send(bot_message);
 
-        if (is_admin) {
-            exportChannelMessages(params)
-                .then(function(params) {
-                {
-                    writeExportedMessagesToForumChannel(params);
-                }
-            });
-        } else {
-            interaction.reply({
-                content: 'Access denied.  Command requires Administrator role.'
-            });
-        }
-        // export channel end
+        else if (interaction.commandName === 'export_channel') {
+            const is_admin = interaction.member.permissionsIn(interaction.channel).has(PermissionsBitField.Flags.Administrator);
+            interaction.reply('Initiating channel export.');
+            const source_channel_id = interaction.options.getString('source_channel')
+                .replace('#', '')
+                .replace('<', '')
+                .replace('>', '');
+            const source_channel =  client.channels.cache.get(source_channel_id);
+            const destination_channel_id = interaction.options.getString('destination_channel')
+                .replace('#', '')
+                .replace('<', '')
+                .replace('>', '');
+            const destination_channel = client.channels.cache.get(destination_channel_id);
+            const starting_message_number = interaction.options.getInteger('starting_message_number');
+            const spoiler_mode = interaction.options.getBoolean('spoiler_channel_export');
+
+            let params = {
+                'source_channel': source_channel,
+                'destination_channel': destination_channel,
+                'bot_channel': bot_channel,
+                'command_user': interaction.member.user,
+                'starting_message_number': starting_message_number,
+                'spoiler_mode': spoiler_mode,
+            };
+
+            let bot_message = `[application command] ${params.command_user.displayName} `
+                + `ran /export_channel source_channel_id:${params.source_channel.id} `
+                + `destination_channel_id:${params.destination_channel.id}`;
+            if (params.starting_message_number != null) {
+                bot_message += ` starting_message_number:${params.starting_message_number}`;
+            }
+            if (params.spoiler_mode) {
+                bot_message += ` spoiler_channel_export:${params.spoiler_mode}`;
+            }
+            console.log(bot_message);
+            params.bot_channel.send(bot_message);
+
+            if (is_admin) {
+                exportChannelMessages(params)
+                    .then(function(params) {
+                        {
+                            writeExportedMessagesToForumChannel(params);
+                        }
+                    });
+            } else {
+                interaction.reply({
+                    content: 'Access denied.  Command requires Administrator role.'
+                });
+            }
+        } // export_channel end
     }
 });
 
@@ -100,6 +111,16 @@ async function main() {
             default: false,
             required: false,
         }],
+    },
+    {
+        name: 'hltb',
+        description: 'Runs a search on howlongtobeat.com',
+        options: [{
+            name: 'query',
+            description: 'The name of the game you are searching for.',
+            type: 3,
+            required: true,
+        }]
     }];
 
     try {
@@ -115,6 +136,44 @@ async function main() {
 }
 
 main();
+
+function outputHltbResultsAsEmbed(interaction, result, destination_channel) {
+
+    const hltb_result = result[0];
+
+    const hltbEmbed = {
+        color: 0x0099ff,
+        title: `How Long to Beat ${hltb_result.name}`,
+        url: `https://howlongtobeat.com/game/${hltb_result.id}`,
+        author: {
+            name: 'HowLongToBeat™',
+            icon_url: 'https://howlongtobeat.com/img/hltb_brand.png',
+            url: 'https://howlongtobeat.com',
+        },
+        fields: [
+            {
+                name: 'Main',
+                value: `${hltb_result.gameplayMain} Hours`,
+                inline: true,
+            },
+            {
+                name: 'Main + Extra',
+                value: `${hltb_result.gameplayMainExtra} Hours`,
+                inline: true,
+            },
+            {
+                name: 'Completionist',
+                value: `${hltb_result.gameplayCompletionist} Hours`,
+                inline: true,
+            }
+        ],
+        image: {
+            url: hltb_result.imageUrl,
+        }
+    };
+
+    interaction.reply({ embeds: [hltbEmbed] });
+}
 
 function outputMessageToConsole(message) {
     const messageChannelName = message.channel.name;
