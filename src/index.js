@@ -1,8 +1,8 @@
-import {config} from 'dotenv';
+import { config } from 'dotenv';
 import { Client, PermissionsBitField, Routes } from 'discord.js';
 import fetchAll from 'discord-fetch-all';
 import { REST } from '@discordjs/rest';
-import { HowLongToBeatService, HowLongToBeatEntry } from 'howlongtobeat';
+import { HowLongToBeatService } from 'howlongtobeat';
 
 
 config();
@@ -40,11 +40,16 @@ client.on('interactionCreate', async (interaction) => {
                 .replace('<', '')
                 .replace('>', '');
             const source_channel =  client.channels.cache.get(source_channel_id);
-            const destination_channel_id = interaction.options.getString('destination_channel')
-                .replace('#', '')
-                .replace('<', '')
-                .replace('>', '');
-            const destination_channel = client.channels.cache.get(destination_channel_id);
+
+            let destination_channel_id = interaction.options.getString('destination_channel');
+            let destination_channel;
+            if (destination_channel_id.toLowerCase() === 'here') {
+                destination_channel = interaction.channel;
+            } else {
+                destination_channel_id = destination_channel_id.replace('#', '').replace('<', '').replace('>', '');
+                destination_channel = client.channels.cache.get(destination_channel_id);
+            }
+
             const starting_message_number = interaction.options.getInteger('starting_message_number');
             const spoiler_mode = interaction.options.getBoolean('spoiler_channel_export');
 
@@ -98,7 +103,8 @@ async function main() {
             name: 'destination_channel',
             description: 'The the forum channel you are exporting messages to.',
             type: 3,
-            required: true,
+            default: 'here',
+            required: false,
         },{
             name: 'starting_message_number',
             description: 'The number of the first message to output, for if an export is interrupted.',
@@ -231,7 +237,7 @@ async function writeExportedMessagesToForumChannel(params) {
         // so... I'm slowing it down for spoiler mode.
         if (params.spoiler_mode) {
             let sleep = async (ms) => await new Promise(r => setTimeout(r,ms));
-            await sleep(2000)
+            await sleep(1500)
             outputMessageAsEmbed(params);
         } else {
             outputMessageAsEmbed(params);
