@@ -43,7 +43,7 @@ client.on('interactionCreate', async (interaction) => {
 
             let destination_channel_id = interaction.options.getString('destination_channel');
             let destination_channel;
-            if (destination_channel_id.toLowerCase() === 'here') {
+            if (destination_channel_id == null) {
                 destination_channel = interaction.channel;
             } else {
                 destination_channel_id = destination_channel_id.replace('#', '').replace('<', '').replace('>', '');
@@ -103,7 +103,6 @@ async function main() {
             name: 'destination_channel',
             description: 'The the forum channel you are exporting messages to.',
             type: 3,
-            default: 'here',
             required: false,
         },{
             name: 'starting_message_number',
