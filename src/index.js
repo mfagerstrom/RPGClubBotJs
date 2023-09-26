@@ -10,6 +10,7 @@ const TOKEN = process.env.BOT_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
 const BOT_CHANNEL_ID = process.env.BOT_CHANNEL_ID;
+const BOT_THREAD_ID = process.env.BOT_THREAD_ID;
 
 const client = new Client({
     intents: ['Guilds', 'GuildMessages', 'MessageContent']
@@ -23,7 +24,7 @@ client.on('ready', () => {console.log(`${client.user.tag} has logged in.`)});
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand()) {
         // for all interactions
-        const bot_channel =  client.channels.cache.get(BOT_CHANNEL_ID);
+        const bot_channel =  client.threads.cache.get(BOT_THREAD_ID);
 
         if (interaction.commandName === 'hltb') {
             const hltb_query = interaction.options.getString('query');
@@ -242,6 +243,10 @@ async function writeExportedMessagesToForumChannel(params) {
             outputMessageAsEmbed(params);
         }
     }
+
+    bot_message = `[export channel] Export completed.  @merph518`;
+    console.log(bot_message);
+    params.destination_channel.send(bot_message);
 }
 
 function outputMessageAsEmbed(params) {
