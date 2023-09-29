@@ -9,8 +9,6 @@ config();
 const TOKEN = process.env.BOT_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
-const BOT_CHANNEL_ID = process.env.BOT_CHANNEL_ID;
-const BOT_THREAD_ID = process.env.BOT_THREAD_ID;
 
 const client = new Client({
     intents: ['Guilds', 'GuildMessages', 'MessageContent']
@@ -24,8 +22,6 @@ client.on('ready', () => {console.log(`${client.user.tag} has logged in.`)});
 client.on('interactionCreate', async (interaction) => {
     if (interaction.isChatInputCommand()) {
         // for all interactions
-        const bot_channel =  client.threads.cache.get(BOT_THREAD_ID);
-
         if (interaction.commandName === 'hltb') {
             const hltb_query = interaction.options.getString('query');
             const destination_channel = interaction.channel;
@@ -57,7 +53,6 @@ client.on('interactionCreate', async (interaction) => {
             let params = {
                 'source_channel': source_channel,
                 'destination_channel': destination_channel,
-                'bot_channel': bot_channel,
                 'command_user': interaction.member.user,
                 'starting_message_number': starting_message_number,
                 'spoiler_mode': spoiler_mode,
@@ -73,7 +68,7 @@ client.on('interactionCreate', async (interaction) => {
                 bot_message += ` spoiler_channel_export:${params.spoiler_mode}`;
             }
             console.log(bot_message);
-            params.bot_channel.send(bot_message);
+            params.destination_channel.send(bot_message);
 
             if (is_admin) {
                 exportChannelMessages(params)
@@ -198,7 +193,7 @@ async function exportChannelMessages(params) {
         bot_message = `[export channel] Collecting messages in #${params.source_channel.name} starting with message ${params.starting_message_number}.`;
     }
     console.log(bot_message);
-    params.bot_channel.send(bot_message);
+    params.destination_channel.send(bot_message);
 
     const allMessages = await fetchAll.messages(params.source_channel, {
         reverseArray: true, // Reverse the returned array
@@ -221,7 +216,7 @@ async function exportChannelMessages(params) {
 
     bot_message = `[export channel] ${params.exportedMessages.length} messages collected.`;
     console.log(bot_message);
-    params.bot_channel.send(bot_message);
+    params.destination_channel.send(bot_message);
 
     return params;
 }
@@ -229,7 +224,7 @@ async function exportChannelMessages(params) {
 async function writeExportedMessagesToForumChannel(params) {
     let bot_message = `[export channel] Writing messages to ${params.destination_channel.name} forum channel.`;
     console.log(bot_message);
-    params.bot_channel.send(bot_message);
+    params.destination_channel.send(bot_message);
 
     for (params.messageCounter = 1; params.messageCounter <= params.exportedMessages.length; params.messageCounter++) {
         // spoiler images need to be treated as file attachments
@@ -244,7 +239,7 @@ async function writeExportedMessagesToForumChannel(params) {
         }
     }
 
-    bot_message = `[export channel] Export completed.  @merph518`;
+    bot_message = `[export channel] Export completed.  <@191938640413327360>`;
     console.log(bot_message);
     params.destination_channel.send(bot_message);
 }
