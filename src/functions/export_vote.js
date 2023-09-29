@@ -175,3 +175,30 @@ function outputMessageAsEmbed(params) {
         params.destination_channel.send({ embeds: [messageEmbed] });
     }
 }
+
+export const export_vote_command_setup = {
+    name: 'export_channel',
+    description: 'Export a channel\'s content to a forum channel.',
+    options: [{
+        name: 'source_channel',
+        description: 'The channel you are exporting messages from.',
+        type: 3,
+        required: true,
+    },{
+        name: 'destination_channel',
+        description: 'The the forum channel you are exporting messages to.',
+        type: 3,
+        required: false,
+    },{
+        name: 'starting_message_number',
+        description: 'The number of the first message to output, for if an export is interrupted.',
+        type: 4,
+        required: false,
+    },{
+        name: 'spoiler_channel_export',
+        description: 'Is the source channel a spoiler channel?',
+        type: 5,
+        default: false,
+        required: false,
+    }],
+};
