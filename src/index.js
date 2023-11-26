@@ -25,7 +25,7 @@ const sql_config = {
 // Application commands
 import { export_vote, export_vote_command_setup } from './functions/export_vote.js';
 import { hltb_search, hltb_command_setup } from './functions/hltb.js';
-import { list_nominations, noms_command_setup } from './functions/noms.js';
+//import { list_nominations, noms_command_setup } from './functions/noms.js';
 
 // private data in .env file
 config();
@@ -43,6 +43,22 @@ const rest = new REST({version:'10'}).setToken(TOKEN);
 
 client.on('ready', () => {
     console.log(`${client.user.tag} has logged in.`);
+
+    client.on('messageCreate', message => {
+        outputMessageToConsole(message);
+
+        // handle twitter preview issues
+        if(message.content.includes('https://twitter.com') || message.content.includes('https://x.com')) {
+
+            let messageArray = message.content.split(/(\s+)/);
+
+            for (let x = 0; x < messageArray.length; x++) {
+                if (messageArray[x].includes('https://twitter.com') || messageArray[x].includes('https://x.com')) {
+                    message.channel.send(messageArray[x].replaceAll('https://twitter.com', 'https://vxtwitter.com').replaceAll('https://x.com', 'https://vxtwitter.com'));
+                }
+            }
+        }
+    });
 });
 
 client.on('interactionCreate', async (interaction) => {
@@ -71,12 +87,12 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 async function main() {
-    connectAndExecuteSql("select * from vote_round");
+    //connectAndExecuteSql("select * from vote_round");
 
     const commands = [
         export_vote_command_setup,
         hltb_command_setup,
-        noms_command_setup,
+        //noms_command_setup,
     ];
 
     try {
@@ -89,6 +105,15 @@ async function main() {
     } catch (err) {
         console.log(err);
     }
+}
+
+function outputMessageToConsole(message) {
+    const messageChannelName = message.channel.name;
+    const messageDateTime = message.createdAt.toLocaleString();
+    const messageAuthor = message.author.globalName;
+    const messageContent = message.content;
+
+    console.log(`<${messageChannelName}> [${messageDateTime}] ${messageAuthor}: ${messageContent}`);
 }
 
 function connectAndExecuteSql(sql_statement) {
