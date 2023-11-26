@@ -1,9 +1,9 @@
 import { HowLongToBeatService } from 'howlongtobeat';
-import {EmbedBuilder, ButtonBuilder, ActionRowBuilder} from "discord.js";
+import { EmbedBuilder } from "discord.js";
 
 const hltbService = new HowLongToBeatService();
 
-export async function hltb_search(client, interaction) {
+export function hltb_search(client, interaction) {
     const hltb_query = interaction.options.getString('query');
     const destination_channel = interaction.channel;
 

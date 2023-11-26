@@ -1,8 +1,6 @@
-import {PermissionsBitField} from "discord.js";
 import fetchAll from "discord-fetch-all";
 
 export function export_vote(client, interaction) {
-    const is_admin = interaction.member.permissionsIn(interaction.channel).has(PermissionsBitField.Flags.Administrator);
     interaction.reply('Initiating channel export.');
     const source_channel_id = interaction.options.getString('source_channel')
         .replace('#', '')
@@ -42,18 +40,12 @@ export function export_vote(client, interaction) {
     console.log(bot_message);
     params.destination_channel.send(bot_message);
 
-    if (is_admin) {
-        exportChannelMessages(params)
-            .then(function(params) {
-                {
-                    writeExportedMessagesToForumChannel(params);
-                }
-            });
-    } else {
-        interaction.reply({
-            content: 'Access denied.  Command requires Administrator role.'
+    exportChannelMessages(params)
+        .then(function(params) {
+            {
+                writeExportedMessagesToForumChannel(params);
+            }
         });
-    }
 }
 
 async function exportChannelMessages(params) {
