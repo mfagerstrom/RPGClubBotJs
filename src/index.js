@@ -45,7 +45,7 @@ client.on('ready', () => {
     console.log(`${client.user.tag} has logged in.`);
 
     client.on('messageCreate', message => {
-        outputMessageToConsole(message);
+        //outputMessageToConsole(message);
 
         // handle twitter preview issues
         if(message.content.includes('https://twitter.com') || message.content.includes('https://x.com')) {
