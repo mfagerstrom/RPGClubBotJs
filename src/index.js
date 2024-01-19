@@ -47,7 +47,7 @@ client.on('ready', () => {
     client.on('messageCreate', message => {
         //outputMessageToConsole(message);
 
-        // handle twitter preview issues
+        /* handle twitter preview issues (no longer needed)
         if(message.content.includes('https://twitter.com') || message.content.includes('https://x.com')) {
 
             let messageArray = message.content.split(/(\s+)/);
@@ -58,6 +58,7 @@ client.on('ready', () => {
                 }
             }
         }
+        */
     });
 });
 
