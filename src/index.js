@@ -2,29 +2,15 @@
 import { config } from 'dotenv';
 
 // discord specific libraries
-import { Client, Routes, PermissionsBitField } from 'discord.js';
+import { Client, Routes } from 'discord.js';
 import { REST } from '@discordjs/rest';
 
-// Microsoft SQL server
-import { Connection, Request, TYPES } from 'tedious';
-
-const sql_config = {
-    server: 'localhost',
-    authentication: {
-        type: 'default',
-        options: {
-            userName: 'bot',
-            password: 'REJW99ftbotbot'
-        }
-    },
-    options: {
-        database: 'rpgclub_voting'
-    }
-};
-
 // Application commands
-import { export_vote, export_vote_command_setup } from './functions/export_vote.js';
+import { export_channel, export_channel_command_setup } from './functions/export_channel.js';
 import { hltb_search, hltb_command_setup } from './functions/hltb.js';
+import { output_message_to_console } from './functions/output_message_to_console.js';
+import { admin_check } from './functions/admin_check.js';
+import { on_join } from './functions/on_join.js';
 //import { list_nominations, noms_command_setup } from './functions/noms.js';
 
 // private data in .env file
@@ -35,8 +21,30 @@ const TOKEN = process.env.BOT_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
 const GUILD_ID = process.env.GUILD_ID;
 
+// Microsoft SQL server
+import { Connection, Request, TYPES } from 'tedious';
+
+const SQL_SERVER = process.env.SQL_SERVER;
+const SQL_USERNAME = process.env.SQL_USERNAME;
+const SQL_PASSWORD = process.env.SQL_PASSWORD;
+const SQL_DATABASE = process.env.SQL_DATABASE;
+
+const sql_config = {
+    server: SQL_SERVER,
+    authentication: {
+        type: 'default',
+        options: {
+            userName: SQL_USERNAME,
+            password: SQL_PASSWORD,
+        }
+    },
+    options: {
+        database: SQL_DATABASE,
+    }
+};
+
 const client = new Client({
-    intents: ['Guilds', 'GuildMessages', 'MessageContent']
+    intents: ['Guilds', 'GuildMessages', 'GuildMembers', 'GuildPresences', 'MessageContent']
 });
 
 const rest = new REST({version:'10'}).setToken(TOKEN);
@@ -45,20 +53,12 @@ client.on('ready', () => {
     console.log(`${client.user.tag} has logged in.`);
 
     client.on('messageCreate', message => {
-        //outputMessageToConsole(message);
+        output_message_to_console(message);
+    });
 
-        /* handle twitter preview issues (no longer needed)
-        if(message.content.includes('https://twitter.com') || message.content.includes('https://x.com')) {
-
-            let messageArray = message.content.split(/(\s+)/);
-
-            for (let x = 0; x < messageArray.length; x++) {
-                if (messageArray[x].includes('https://twitter.com') || messageArray[x].includes('https://x.com')) {
-                    message.channel.send(messageArray[x].replaceAll('https://twitter.com', 'https://vxtwitter.com').replaceAll('https://x.com', 'https://vxtwitter.com'));
-                }
-            }
-        }
-        */
+    client.on('guildMemberAdd', (member) => {
+        console.log(member);
+        on_join(member);
     });
 });
 
@@ -73,7 +73,7 @@ client.on('interactionCreate', async (interaction) => {
             const ok_to_run_command = admin_check(client, interaction);
 
             if (ok_to_run_command) {
-                export_vote(client, interaction);
+                export_channel(client, interaction);
             }
         }
 
@@ -91,7 +91,7 @@ async function main() {
     //connectAndExecuteSql("select * from vote_round");
 
     const commands = [
-        export_vote_command_setup,
+        export_channel_command_setup,
         hltb_command_setup,
         //noms_command_setup,
     ];
@@ -106,15 +106,6 @@ async function main() {
     } catch (err) {
         console.log(err);
     }
-}
-
-function outputMessageToConsole(message) {
-    const messageChannelName = message.channel.name;
-    const messageDateTime = message.createdAt.toLocaleString();
-    const messageAuthor = message.author.globalName;
-    const messageContent = message.content;
-
-    console.log(`<${messageChannelName}> [${messageDateTime}] ${messageAuthor}: ${messageContent}`);
 }
 
 function connectAndExecuteSql(sql_statement) {
@@ -155,18 +146,6 @@ function executeSqlStatement(sql_connection, sql_statement) {
     });
 
     sql_connection.execSql(request);
-}
-
-function admin_check(client, interaction) {
-    const is_admin = interaction.member.permissionsIn(interaction.channel).has(PermissionsBitField.Flags.Administrator);
-
-    if (!is_admin) {
-        interaction.reply({
-            content: 'Access denied.  Command requires Administrator role.'
-        });
-    }
-
-    return is_admin;
 }
 
 main();

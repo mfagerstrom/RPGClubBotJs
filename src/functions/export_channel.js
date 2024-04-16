@@ -1,6 +1,6 @@
 import fetchAll from "discord-fetch-all";
 
-export function export_vote(client, interaction) {
+export function export_channel(client, interaction) {
     interaction.reply('Initiating channel export.');
     const source_channel_id = interaction.options.getString('source_channel')
         .replace('#', '')
@@ -168,7 +168,7 @@ function outputMessageAsEmbed(params) {
     }
 }
 
-export const export_vote_command_setup = {
+export const export_channel_command_setup = {
     name: 'export_channel',
     description: 'Export a channel\'s content to a forum channel.',
     options: [{
