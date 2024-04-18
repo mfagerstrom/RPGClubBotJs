@@ -35,7 +35,6 @@ client.on('ready', () => {
     });
 
     client.on('guildMemberAdd', (member) => {
-        console.log(member);
         on_join(member);
     });
 });
